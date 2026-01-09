@@ -1,6 +1,3 @@
-# Microsoft Agent Framework (--pre flag required while in preview)
 agent-framework-azure-ai
-
-# Azure Authentication
 azure-identity
 monocle_apptrace
