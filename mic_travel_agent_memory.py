@@ -1,5 +1,6 @@
 import asyncio
 import os
+import uuid
 from agent_framework import ChatAgent
 from agent_framework.azure import AzureOpenAIChatClient
 from azure.identity.aio import AzureCliCredential
@@ -22,12 +23,22 @@ def book_flight(
 
 
 async def multi_turn_example():
-    # Initialize Azure OpenAI client
-    client = AzureOpenAIChatClient(
-        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),
-        credential=AzureCliCredential(),
-    )
+    # Initialize Azure OpenAI client (uses Chat Completions API with local session management)
+    
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    if api_key:
+        client = AzureOpenAIChatClient(
+            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),
+            api_key=api_key,
+        )
+    else:
+        # Use Azure CLI authentication (requires: az login)
+        client = AzureOpenAIChatClient(
+            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),
+            credential=AzureCliCredential(),
+        )
     
     # Create flight booking agent
     flight_agent = client.create_agent(
@@ -40,25 +51,29 @@ async def multi_turn_example():
         tools=[book_flight],
     )
 
-    # Create a thread for persistent conversation
+    # Create a thread - locally managed (session stored via serialize/deserialize)
     thread = flight_agent.get_new_thread()
 
     # First interaction
+    print("\n[User]: Book a flight from BOM to JFK for December 15th")
     response1 = await flight_agent.run("Book a flight from BOM to JFK for December 15th", thread=thread)
-    print(f"Agent: {response1.text}")
+    print(f"[Agent]: {response1.text}")
 
-    # Second interaction - agent remembers the name
+    # Second interaction - agent remembers context (stored in Azure)
+    print("\n[User]: Book a return flight for December 20th")
     response2 = await flight_agent.run("Book a return flight for December 20th", thread=thread)
-    print(f"Agent: {response2.text}")  # Should mention "Alice"
+    print(f"[Agent]: {response2.text}")
 
-    # Serialize thread for storage
+    # Serialize thread for local storage (optional, as Azure already stores it)
     serialized = await thread.serialize()
-    print("\nThread serialized for storage...")
 
     # Later, deserialize and continue conversation
+    print("\n--- Simulating session resume ---")
     new_thread = await flight_agent.deserialize_thread(serialized)
+    
+    print("\n[User]: What did we talk about?")
     response3 = await flight_agent.run("What did we talk about?", thread=new_thread)
-    print(f"Agent: {response3.text}")  # Should remember previous context
+    print(f"[Agent]: {response3.text}")
 
 if __name__ == "__main__":
     import asyncio

@@ -1,0 +1,164 @@
+[{
+    "name": "openai.resources.chat.completions.AsyncCompletions.create",
+    "context": {
+        "trace_id": "4cef556f960f7cc242ae12fbbed293d5",
+        "span_id": "15f11fba9705d51b",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "30760e907cb85d50",
+    "start_time": "2026-01-11T02:01:29.956058Z",
+    "end_time": "2026-01-11T02:01:32.098257Z",
+    "status": {
+        "status_code": "OK"
+    },
+    "attributes": {
+        "monocle_apptrace.version": "0.7.0",
+        "monocle_apptrace.language": "python",
+        "span_source": "/Users/devika/Desktop/okahu_demo/microsoft-travel-agent/.venv/lib/python3.11/site-packages/agent_framework/openai/_chat_client.py:79",
+        "workflow.name": "mic_ag_fm",
+        "entity.1.type": "inference.azure_openai",
+        "entity.1.provider_name": "okahu-openai-dev.openai.azure.com",
+        "entity.1.inference_endpoint": "https://okahu-openai-dev.openai.azure.com/openai/deployments/kshitiz-gpt/",
+        "entity.2.name": "kshitiz-gpt",
+        "entity.2.type": "model.llm.kshitiz-gpt",
+        "span.type": "inference",
+        "scope.agentic.invocation": "67fe7f3a2b94c527a686b46788518d33",
+        "entity.count": 2,
+        "span.subtype": "turn_end"
+    },
+    "events": [
+        {
+            "name": "data.input",
+            "timestamp": "2026-01-11T02:01:29.956494Z",
+            "attributes": {
+                "input": [
+                    "{\"system\": [{\"type\": \"text\", \"text\": \"You are a Flight Booking Assistant. Your goal is to help users book flights between any two cities or airports. Book the requested flight and provide confirmation details.\"}]}",
+                    "{\"user\": [{\"type\": \"text\", \"text\": \"Book a flight from BOM to JFK for December 15th\"}]}",
+                    "{\"tool\": \"FLIGHT BOOKING CONFIRMED #FL522117: BOM to JFK - $444\"}",
+                    "{\"assistant\": [{\"type\": \"text\", \"text\": \"Your flight from BOM to JFK on December 15th is booked successfully. The booking reference number is FL522117 and the ticket price is $444. If you need any more assistance, feel free to ask!\"}]}",
+                    "{\"user\": [{\"type\": \"text\", \"text\": \"Book a return flight for December 20th\"}]}",
+                    "{\"tool\": \"FLIGHT BOOKING CONFIRMED #FL276747: JFK to BOM - $479\"}",
+                    "{\"assistant\": [{\"type\": \"text\", \"text\": \"Your return flight from JFK to BOM on December 20th is booked successfully. The booking reference number is FL276747 and the ticket price is $479. If you need further assistance, please let me know!\"}]}",
+                    "{\"user\": [{\"type\": \"text\", \"text\": \"What did we talk about?\"}]}"
+                ]
+            }
+        },
+        {
+            "name": "data.output",
+            "timestamp": "2026-01-11T02:01:32.098225Z",
+            "attributes": {
+                "response": "{\"assistant\": \"We discussed booking flights for you. Initially, you requested a flight from BOM (Mumbai) to JFK (New York) for December 15th, which I successfully booked. Then you asked for a return flight from JFK to BOM for December 20th, which I also booked for you. If you need any additional help with these flights or anything else, just let me know!\"}"
+            }
+        },
+        {
+            "name": "metadata",
+            "timestamp": "2026-01-11T02:01:32.098240Z",
+            "attributes": {
+                "completion_tokens": 79,
+                "prompt_tokens": 392,
+                "total_tokens": 471,
+                "finish_reason": "stop",
+                "finish_type": "success"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "service.name": "mic_ag_fm"
+        },
+        "schema_url": ""
+    }
+}
+,{
+    "name": "agent_framework.ChatAgent.run",
+    "context": {
+        "trace_id": "4cef556f960f7cc242ae12fbbed293d5",
+        "span_id": "30760e907cb85d50",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": "90bdf0c3115c4069",
+    "start_time": "2026-01-11T02:01:29.954671Z",
+    "end_time": "2026-01-11T02:01:32.098369Z",
+    "status": {
+        "status_code": "OK"
+    },
+    "attributes": {
+        "monocle_apptrace.version": "0.7.0",
+        "monocle_apptrace.language": "python",
+        "span_source": "/Users/devika/Desktop/okahu_demo/microsoft-travel-agent/mic_agent_new.py:80",
+        "workflow.name": "mic_ag_fm",
+        "entity.1.type": "agent.microsoft",
+        "entity.1.name": "MS_Flight_Booking_Agent",
+        "entity.1.description": "unknown_model",
+        "last.inference": "15f11fba9705d51b:*",
+        "span.type": "agentic.invocation",
+        "scope.agentic.invocation": "67fe7f3a2b94c527a686b46788518d33",
+        "entity.count": 1,
+        "span.subtype": "content_processing"
+    },
+    "events": [
+        {
+            "name": "data.input",
+            "timestamp": "2026-01-11T02:01:29.954776Z",
+            "attributes": {
+                "input": "What did we talk about?"
+            }
+        },
+        {
+            "name": "data.output",
+            "timestamp": "2026-01-11T02:01:32.098356Z",
+            "attributes": {
+                "response": "We discussed booking flights for you. Initially, you requested a flight from BOM (Mumbai) to JFK (New York) for December 15th, which I successfully booked. Then you asked for a return flight from JFK to BOM for December 20th, which I also booked for you. If you need any additional help with these flights or anything else, just let me know!"
+            }
+        }
+    ],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "service.name": "mic_ag_fm"
+        },
+        "schema_url": ""
+    }
+}
+,{
+    "name": "workflow",
+    "context": {
+        "trace_id": "4cef556f960f7cc242ae12fbbed293d5",
+        "span_id": "90bdf0c3115c4069",
+        "trace_state": "[]"
+    },
+    "kind": "SpanKind.INTERNAL",
+    "parent_id": null,
+    "start_time": "2026-01-11T02:01:29.954529Z",
+    "end_time": "2026-01-11T02:01:32.098375Z",
+    "status": {
+        "status_code": "OK"
+    },
+    "attributes": {
+        "monocle_apptrace.version": "0.7.0",
+        "monocle_apptrace.language": "python",
+        "span_source": "/Users/devika/Desktop/okahu_demo/microsoft-travel-agent/mic_agent_new.py:80",
+        "scope.agentic.invocation": "67fe7f3a2b94c527a686b46788518d33",
+        "workflow.name": "mic_ag_fm",
+        "span.type": "workflow",
+        "entity.1.name": "mic_ag_fm",
+        "entity.1.type": "workflow.generic",
+        "entity.2.type": "app_hosting.generic",
+        "entity.2.name": "generic",
+        "monocle.last.agent.invocation.id": "30760e907cb85d50",
+        "monocle.last.agent.name": "MS_Flight_Booking_Agent",
+        "last.inference": "15f11fba9705d51b:*"
+    },
+    "events": [],
+    "links": [],
+    "resource": {
+        "attributes": {
+            "service.name": "mic_ag_fm"
+        },
+        "schema_url": ""
+    }
+}
+]
