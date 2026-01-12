@@ -1,15 +1,14 @@
 import asyncio
 import os
-import uuid
 from agent_framework import ChatAgent
-from agent_framework.azure import AzureOpenAIChatClient
+from agent_framework.azure import AzureOpenAIAssistantsClient
 from azure.identity.aio import AzureCliCredential
 from typing import Annotated
 import random
 
 # Enable Monocle Tracing
 from monocle_apptrace import setup_monocle_telemetry
-setup_monocle_telemetry(workflow_name = 'mic_ag_fm', monocle_exporters_list = 'file')
+setup_monocle_telemetry(workflow_name = 'mic_ag_assistants', monocle_exporters_list = 'file')
 
 # Flight booking tool
 def book_flight(
@@ -23,20 +22,22 @@ def book_flight(
 
 
 async def multi_turn_example():
-    # Initialize Azure OpenAI client (uses Chat Completions API with local session management)
+    # Initialize Azure OpenAI Assistants client (server-managed threads)
     
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     if api_key:
-        client = AzureOpenAIChatClient(
+        client = AzureOpenAIAssistantsClient(
             endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),
+            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),  # Required at client level
+            api_version="2024-05-01-preview",  # Assistants API version
             api_key=api_key,
         )
     else:
         # Use Azure CLI authentication (requires: az login)
-        client = AzureOpenAIChatClient(
+        client = AzureOpenAIAssistantsClient(
             endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),
+            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),  # Required at client level
+            api_version="2024-05-01-preview",  # Assistants API version
             credential=AzureCliCredential(),
         )
     
@@ -51,7 +52,8 @@ async def multi_turn_example():
         tools=[book_flight],
     )
 
-    # Create a thread - locally managed (session stored via serialize/deserialize)
+    # Step 1: Let Azure create the thread (don't pass service_thread_id on first call)
+    print(f"\n🆕 Creating new Azure-managed thread...")
     thread = flight_agent.get_new_thread()
 
     # First interaction
@@ -59,22 +61,33 @@ async def multi_turn_example():
     response1 = await flight_agent.run("Book a flight from BOM to JFK for December 15th", thread=thread)
     print(f"[Agent]: {response1.text}")
 
-    # Second interaction - agent remembers context (stored in Azure)
+    # Step 2: Azure has created the thread - get its ID (starts with 'thread_')
+    azure_thread_id = thread.service_thread_id
+    print(f"\n📋 Azure Thread ID: {azure_thread_id}")
+    print(f"✅ Thread is stored on Azure server - use this ID to resume")
+
+    # Second interaction - continue with same thread
     print("\n[User]: Book a return flight for December 20th")
     response2 = await flight_agent.run("Book a return flight for December 20th", thread=thread)
     print(f"[Agent]: {response2.text}")
-
-    # Serialize thread for local storage (optional, as Azure already stores it)
-    serialized = await thread.serialize()
-
-    # Later, deserialize and continue conversation
-    print("\n--- Simulating session resume ---")
-    new_thread = await flight_agent.deserialize_thread(serialized)
     
+    # --- Simulate resuming session later ---
+    print("\n" + "="*60)
+    print("🔄 Simulating session resume (like after app restart)")
+    print("="*60)
+    
+    # Step 3: Resume by passing Azure's thread_id as service_thread_id
+    # Azure retrieves the stored conversation automatically
+    resumed_thread = flight_agent.get_new_thread(service_thread_id=azure_thread_id)
+    print(f"✅ Thread resumed with ID: {azure_thread_id}")
+    print(f"🔗 Azure retrieved full conversation history from server")
+    
+    # Continue conversation - agent has full context from Azure-stored thread
     print("\n[User]: What did we talk about?")
-    response3 = await flight_agent.run("What did we talk about?", thread=new_thread)
+    response3 = await flight_agent.run("What did we talk about?", thread=resumed_thread)
     print(f"[Agent]: {response3.text}")
+    
+    print(f"\n✅ All conversation updates automatically saved to Azure")
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(multi_turn_example())
