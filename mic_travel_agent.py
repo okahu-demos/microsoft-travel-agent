@@ -42,7 +42,7 @@ async def multi_turn_example():
         )
     
     # Create flight booking agent
-    flight_agent = client.create_agent(
+    flight_agent = client.as_agent(
         name="MS_Flight_Booking_Agent",
         instructions=(
             "You are a Flight Booking Assistant. "
