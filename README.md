@@ -44,7 +44,7 @@ pip install -r requirements.txt
 ```bash
 export AZURE_OPENAI_API_KEY=<your-azure-openai-api-key>
 export AZURE_OPENAI_ENDPOINT=<your-azure-openai-endpoint>
-export AZURE_OPENAI_API_DEPLOYMENT=<your-deployment-name>
+export AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=<your-deployment-name>
 export AZURE_OPENAI_API_VERSION=2024-05-01-preview
 ```
 
@@ -59,7 +59,7 @@ az login
 
 # Set environment variables
 export AZURE_OPENAI_ENDPOINT=<your-azure-openai-endpoint>
-export AZURE_OPENAI_API_DEPLOYMENT=<your-deployment-name>
+export AZURE_OPENAI_MODEL_DEPLOYMENT_NAME=<your-deployment-name>
 export AZURE_OPENAI_API_VERSION=2024-05-01-preview
 ```
 

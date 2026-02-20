@@ -30,7 +30,8 @@ def book_flight(
 
 def create_assistants_client() -> AzureOpenAIAssistantsClient:
     deployment_name = (
-        os.getenv("AZURE_OPENAI_API_DEPLOYMENT")
+        os.getenv("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
+        or os.getenv("AZURE_OPENAI_API_DEPLOYMENT")
         or os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME")
     )
     api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-05-01-preview")
@@ -38,8 +39,8 @@ def create_assistants_client() -> AzureOpenAIAssistantsClient:
 
     if not deployment_name:
         raise RuntimeError(
-            "Azure OpenAI deployment name is missing. Set AZURE_OPENAI_API_DEPLOYMENT "
-            "or AZURE_OPENAI_CHAT_DEPLOYMENT_NAME."
+            "Azure OpenAI deployment name is missing. Set AZURE_OPENAI_MODEL_DEPLOYMENT_NAME "
+            "(preferred), AZURE_OPENAI_API_DEPLOYMENT, or AZURE_OPENAI_CHAT_DEPLOYMENT_NAME."
         )
     if not endpoint:
         raise RuntimeError(
