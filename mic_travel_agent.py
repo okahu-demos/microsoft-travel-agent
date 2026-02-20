@@ -1,14 +1,21 @@
 import asyncio
 import os
+import logging
 from agent_framework import ChatAgent
 from agent_framework.azure import AzureOpenAIAssistantsClient
 from azure.identity.aio import AzureCliCredential
 from typing import Annotated
 import random
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Enable Monocle Tracing
 from monocle_apptrace import setup_monocle_telemetry
-setup_monocle_telemetry(workflow_name = 'mic_ag_assistants', monocle_exporters_list = 'file')
+setup_monocle_telemetry(workflow_name = 'okahu_demos_microsoft_travel_agent', monocle_exporters_list = 'file,okahu')
+
+logger = logging.getLogger(__name__)
 
 # Flight booking tool
 def book_flight(
@@ -21,28 +28,45 @@ def book_flight(
     return f"FLIGHT BOOKING CONFIRMED #{confirmation}: {from_airport} to {to_airport} - ${cost}"
 
 
-async def multi_turn_example():
-    # Initialize Azure OpenAI Assistants client (server-managed threads)
-    
+def create_assistants_client() -> AzureOpenAIAssistantsClient:
+    deployment_name = (
+        os.getenv("AZURE_OPENAI_MODEL_DEPLOYMENT_NAME")
+        or os.getenv("AZURE_OPENAI_API_DEPLOYMENT")
+        or os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME")
+    )
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-05-01-preview")
+    endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+
+    if not deployment_name:
+        raise RuntimeError(
+            "Azure OpenAI deployment name is missing. Set AZURE_OPENAI_MODEL_DEPLOYMENT_NAME "
+            "(preferred), AZURE_OPENAI_API_DEPLOYMENT, or AZURE_OPENAI_CHAT_DEPLOYMENT_NAME."
+        )
+    if not endpoint:
+        raise RuntimeError(
+            "Azure OpenAI endpoint is missing. Set AZURE_OPENAI_ENDPOINT."
+        )
+
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     if api_key:
-        client = AzureOpenAIAssistantsClient(
-            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),  # Required at client level
-            api_version="2024-05-01-preview",  # Assistants API version
+        return AzureOpenAIAssistantsClient(
+            endpoint=endpoint,
+            deployment_name=deployment_name,
+            api_version=api_version,
             api_key=api_key,
         )
-    else:
-        # Use Azure CLI authentication (requires: az login)
-        client = AzureOpenAIAssistantsClient(
-            endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-            deployment_name=os.getenv("AZURE_OPENAI_API_DEPLOYMENT"),  # Required at client level
-            api_version="2024-05-01-preview",  # Assistants API version
-            credential=AzureCliCredential(),
-        )
-    
-    # Create flight booking agent
-    flight_agent = client.as_agent(
+
+    return AzureOpenAIAssistantsClient(
+        endpoint=endpoint,
+        deployment_name=deployment_name,
+        api_version=api_version,
+        credential=AzureCliCredential(),
+    )
+
+
+async def setup_agents() -> ChatAgent:
+    client = create_assistants_client()
+    return client.as_agent(
         name="MS_Flight_Booking_Agent",
         instructions=(
             "You are a Flight Booking Assistant. "
@@ -52,42 +76,45 @@ async def multi_turn_example():
         tools=[book_flight],
     )
 
-    # Step 1: Let Azure create the thread (don't pass service_thread_id on first call)
-    print(f"\n🆕 Creating new Azure-managed thread...")
-    thread = flight_agent.get_new_thread()
 
-    # First interaction
+async def run_agent(request: str, service_thread_id: str | None = None):
+    try:
+        flight_agent = await setup_agents()
+    except Exception as exc:
+        logger.error("Failed to initialize agent. Check Azure OpenAI settings in .env", exc_info=True)
+        raise RuntimeError("Failed to initialize Azure OpenAI assistant client.") from exc
+
+    thread = flight_agent.get_new_thread(service_thread_id=service_thread_id)
+    response = await flight_agent.run(request, thread=thread)
+    return response.text, thread.service_thread_id
+
+
+async def multi_turn_example():
+    print("\n🆕 Creating new Azure-managed thread...")
     print("\n[User]: Book a flight from BOM to JFK for December 15th")
-    response1 = await flight_agent.run("Book a flight from BOM to JFK for December 15th", thread=thread)
-    print(f"[Agent]: {response1.text}")
-
-    # Step 2: Azure has created the thread - get its ID (starts with 'thread_')
-    azure_thread_id = thread.service_thread_id
+    response1, azure_thread_id = await run_agent("Book a flight from BOM to JFK for December 15th")
+    print(f"[Agent]: {response1}")
     print(f"\n📋 Azure Thread ID: {azure_thread_id}")
     print(f"✅ Thread is stored on Azure server - use this ID to resume")
 
-    # Second interaction - continue with same thread
     print("\n[User]: Book a return flight for December 20th")
-    response2 = await flight_agent.run("Book a return flight for December 20th", thread=thread)
-    print(f"[Agent]: {response2.text}")
+    response2, _ = await run_agent("Book a return flight for December 20th", service_thread_id=azure_thread_id)
+    print(f"[Agent]: {response2}")
     
     # --- Simulate resuming session later ---
     print("\n" + "="*60)
     print("🔄 Simulating session resume (like after app restart)")
     print("="*60)
     
-    # Step 3: Resume by passing Azure's thread_id as service_thread_id
-    # Azure retrieves the stored conversation automatically
-    resumed_thread = flight_agent.get_new_thread(service_thread_id=azure_thread_id)
     print(f"✅ Thread resumed with ID: {azure_thread_id}")
     print(f"🔗 Azure retrieved full conversation history from server")
     
-    # Continue conversation - agent has full context from Azure-stored thread
     print("\n[User]: What did we talk about?")
-    response3 = await flight_agent.run("What did we talk about?", thread=resumed_thread)
-    print(f"[Agent]: {response3.text}")
+    response3, _ = await run_agent("What did we talk about?", service_thread_id=azure_thread_id)
+    print(f"[Agent]: {response3}")
     
     print(f"\n✅ All conversation updates automatically saved to Azure")
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.WARN)
     asyncio.run(multi_turn_example())
