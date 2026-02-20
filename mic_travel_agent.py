@@ -13,7 +13,7 @@ load_dotenv()
 
 # Enable Monocle Tracing
 from monocle_apptrace import setup_monocle_telemetry
-setup_monocle_telemetry(workflow_name = 'mic_ag_assistants', monocle_exporters_list = 'file')
+setup_monocle_telemetry(workflow_name = 'okahu_demos_microsoft_travel_agent', monocle_exporters_list = 'file,okahu')
 
 logger = logging.getLogger(__name__)
 
