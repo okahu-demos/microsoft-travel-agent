@@ -3,4 +3,4 @@ agent-framework-core==1.0.0b260130
 opentelemetry-semantic-conventions==0.60b1
 opentelemetry-semantic-conventions-ai==0.4.13
 azure-identity
-monocle_apptrace==0.7.6
+monocle_apptrace==0.7.7

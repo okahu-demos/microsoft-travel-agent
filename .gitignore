@@ -1,0 +1,4 @@
+.venv*
+.env*
+.monocle/
+__pycache__/
