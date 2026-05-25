@@ -5,7 +5,7 @@ import pytest_asyncio
 from monocle_test_tools import TraceAssertion
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from mic_travel_agent import setup_agents
+from ms_travel_agent import setup_agents
 
 supervisor = None
 
