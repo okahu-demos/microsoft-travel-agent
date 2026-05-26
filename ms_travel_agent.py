@@ -15,6 +15,10 @@ from travel_agent.runner import multi_turn_example, run_agent
 from travel_agent.session import resolve_session, session_identifier
 from travel_agent.tools import book_flight
 
+from monocle_apptrace import setup_monocle_telemetry
+
+setup_monocle_telemetry(workflow_name="ms_travel_agent",
+                        monocle_exporters_list='file,okahu')
 __all__ = [
     "book_flight",
     "create_assistants_client",
