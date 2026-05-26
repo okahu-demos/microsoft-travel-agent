@@ -201,9 +201,10 @@ Expected: Agent handles relative date references.
 
 ## Running the test suite
 
-The repository ships with a `pytest` suite under [`tests/`](tests/) that drives the agent through `monocle-test-tools`:
+The repository ships with a `pytest` suite under [`tests/`](tests/) that drives the agent through `monocle-test-tools`. Install both the application requirements and the test requirements before running the suite:
 
 ```bash
+pip install -r requirements.txt
 pip install -r tests/requirements.txt
 pytest tests/
 ```
